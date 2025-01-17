@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace keycloak_config_getset
 {
@@ -15,7 +16,7 @@ namespace keycloak_config_getset
             _logger.LogInformation("Auth is Initialized");
         }
 
-        internal static async Task LoginAsync(LoginRequest loginRequest)
+        internal static async Task<LoginResponse> LoginAsync(LoginRequest loginRequest)
         {
             string? srcHost = _configuration["Source:Host"];
             string? srcRealm = _configuration["Source:Realm"];
@@ -48,14 +49,23 @@ namespace keycloak_config_getset
                     _logger.LogInformation("Response status is success...");
                     var responseContent = await response.Content.ReadAsStringAsync();
                     _logger.LogInformation("Response content : {0}", responseContent);
+
+                    LoginResponse? loginResponse = JsonSerializer.Deserialize<LoginResponse>(responseContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true // Allows matching JSON keys in a case-insensitive manner
+                    }) ?? new LoginResponse();
+                    string strLoginResponse = JsonSerializer.Serialize(loginResponse);
+                    _logger.LogInformation("LoginResponse : {0}", strLoginResponse);
+
+                    return loginResponse;
                 }
                 else
                 {
-                    _logger.LogInformation("Response status: {0}", response.StatusCode);
+                    _logger.LogWarning("Response status: {0}", response.StatusCode);
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine("Error Details:");
-                    Console.WriteLine(errorContent);
-                    _logger.LogInformation("Error Details:: {0}", errorContent);
+                    _logger.LogWarning("Error Details:: {0}", errorContent);
+
+                    throw new Exception($"Login failed: {errorContent}");
                 }
             }
             catch (Exception e)
