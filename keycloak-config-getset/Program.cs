@@ -1,4 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using keycloak_config_getset;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -15,17 +15,28 @@ var configuration = new ConfigurationBuilder()
         .AddJsonFile("keycloak-config-getset/appsettings.json", optional: false, reloadOnChange: true)
         .Build();
 
-var srcHost = configuration["Source:Host"];
-var srcRealm = configuration["Source:Realm"];
-var srcClientId = configuration["Source:ClientId"];
-var srcClientSecret = configuration["Source:ClientSecret"];
+string? srcHost = configuration["Source:Host"];
+string? srcRealm = configuration["Source:Realm"];
+string? srcClientId = configuration["Source:ClientId"];
+string? srcClientSecret = configuration["Source:ClientSecret"];
 
-var dstHost = configuration["Destination:Host"];
-var dstRealm = configuration["Destination:Realm"];
-var dstClientId = configuration["Destination:ClientId"];
-var dstClientSecret = configuration["Destination:ClientSecret"];
+string? dstHost = configuration["Destination:Host"];
+string? dstRealm = configuration["Destination:Realm"];
+string? dstClientId = configuration["Destination:ClientId"];
+string? dstClientSecret = configuration["Destination:ClientSecret"];
 
 logger.LogInformation("{0} - {1} - {2} - {3}", srcHost, srcRealm, srcClientId, srcClientSecret);
 logger.LogInformation("{0} - {1} - {2} - {3}", dstHost, dstRealm, dstClientId, dstClientSecret);
+
+LoginRequest loginRequest = new LoginRequest
+{
+    GrantType = "client_credentials",
+    Scope = "openid",
+    ClientId = srcClientId,
+    ClientSecret = srcClientSecret
+};
+
+AuthActions.Initialize(logger, configuration);
+await AuthActions.LoginAsync(loginRequest);
 
 Console.WriteLine("Hello, World!");

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace keycloak_config_getset
 {
-    public class RealmAttribute
+    internal class RealmAttribute
     {
         [JsonPropertyName("cibaBackchannelTokenDeliveryMode")]
         public string? CibaBackchannelTokenDeliveryMode { get; set; }
@@ -50,7 +50,7 @@ namespace keycloak_config_getset
         public string? CibaInterval { get; set; }
     }
 
-    public class RealmToken
+    internal class RealmToken
     {
         [Description("Default Signature Algorithm")]
         [JsonPropertyName("defaultSignatureAlgorithm")]
