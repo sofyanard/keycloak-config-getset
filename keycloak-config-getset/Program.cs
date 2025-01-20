@@ -37,7 +37,7 @@ LoginRequest loginRequest = new LoginRequest
 };
 
 AuthActions.Initialize(logger, configuration);
-LoginResponse loginResponse = await AuthActions.LoginAsync(loginRequest);
+LoginResponse loginResponse = await AuthActions.LoginAsync("Source");
 
 string? accessToken = loginResponse.AccessToken;
 logger.LogInformation("Access Token: {0}", accessToken);

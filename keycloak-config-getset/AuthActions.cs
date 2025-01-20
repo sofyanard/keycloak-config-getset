@@ -16,19 +16,28 @@ namespace keycloak_config_getset
             _logger.LogInformation("Auth is Initialized");
         }
 
-        internal static async Task<LoginResponse> LoginAsync(LoginRequest loginRequest)
+        internal static LoginRequest GetLoginRequest(string env)
         {
-            string? srcHost = _configuration["Source:Host"];
-            string? srcRealm = _configuration["Source:Realm"];
-            string? srcClientId = _configuration["Source:ClientId"];
-            string? srcClientSecret = _configuration["Source:ClientSecret"];
+            return new LoginRequest
+            {
+                GrantType = "client_credentials",
+                Scope = "openid",
+                ClientId = _configuration[$"{env}:ClientId"],
+                ClientSecret = _configuration[$"{env}:ClientSecret"]
+            };
+        }
 
-            var xwfurlencodedLoginRequest = Helpers.ObjectToFormUrlEncoded(loginRequest);
+        internal static async Task<LoginResponse> LoginAsync(string env)
+        {
+            string? host = _configuration["Source:Host"];
+            string? realm = _configuration["Source:Realm"];
+
+            var xwfurlencodedLoginRequest = Helpers.ObjectToFormUrlEncoded(GetLoginRequest(env));
             _logger.LogInformation("Request Data: {0}", xwfurlencodedLoginRequest);
 
             var content = new FormUrlEncodedContent(xwfurlencodedLoginRequest);
 
-            string? loginUrl = $"{srcHost}/realms/{srcRealm}/protocol/openid-connect/token";
+            string? loginUrl = $"{host}/realms/{realm}/protocol/openid-connect/token";
             _logger.LogInformation("Login Url: {0}", loginUrl);
 
             // Bypass SSL certificate validation
