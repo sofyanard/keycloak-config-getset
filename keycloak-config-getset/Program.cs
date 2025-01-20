@@ -1,6 +1,7 @@
 ﻿using keycloak_config_getset;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 using var loggerFactory = LoggerFactory.Create(builder =>
 {
@@ -41,5 +42,11 @@ LoginResponse loginResponse = await AuthActions.LoginAsync("Source");
 
 string? accessToken = loginResponse.AccessToken;
 logger.LogInformation("Access Token: {0}", accessToken);
+
+RealmActions.Initialize(logger, configuration);
+RealmToken realmToken = await RealmActions.GetRealmTokenAsync("Source", accessToken);
+
+string strRealmToken = JsonSerializer.Serialize(realmToken);
+logger.LogInformation("RealmToken: {0}", strRealmToken);
 
 Console.WriteLine("Hello, World!");

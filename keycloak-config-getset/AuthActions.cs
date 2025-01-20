@@ -13,7 +13,7 @@ namespace keycloak_config_getset
         {
             _logger = logger;
             _configuration = configuration;
-            _logger.LogInformation("Auth is Initialized");
+            _logger.LogInformation("AuthActions is Initialized");
         }
 
         internal static LoginRequest GetLoginRequest(string env)
