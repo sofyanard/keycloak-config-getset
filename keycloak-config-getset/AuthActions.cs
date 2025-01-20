@@ -29,8 +29,8 @@ namespace keycloak_config_getset
 
         internal static async Task<LoginResponse> LoginAsync(string env)
         {
-            string? host = _configuration["Source:Host"];
-            string? realm = _configuration["Source:Realm"];
+            string? host = _configuration[$"{env}:Host"];
+            string? realm = _configuration[$"{env}:Realm"];
 
             var xwfurlencodedLoginRequest = Helpers.ObjectToFormUrlEncoded(GetLoginRequest(env));
             _logger.LogInformation("Request Data: {0}", xwfurlencodedLoginRequest);
