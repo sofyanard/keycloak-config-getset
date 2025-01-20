@@ -29,24 +29,26 @@ string? dstClientSecret = configuration["Destination:ClientSecret"];
 logger.LogInformation("{0} - {1} - {2} - {3}", srcHost, srcRealm, srcClientId, srcClientSecret);
 logger.LogInformation("{0} - {1} - {2} - {3}", dstHost, dstRealm, dstClientId, dstClientSecret);
 
-LoginRequest loginRequest = new LoginRequest
-{
-    GrantType = "client_credentials",
-    Scope = "openid",
-    ClientId = srcClientId,
-    ClientSecret = srcClientSecret
-};
 
+
+// Initialize Actions Classes
 AuthActions.Initialize(logger, configuration);
-LoginResponse loginResponse = await AuthActions.LoginAsync("Source");
-
-string? accessToken = loginResponse.AccessToken;
-logger.LogInformation("Access Token: {0}", accessToken);
-
 RealmActions.Initialize(logger, configuration);
-RealmToken realmToken = await RealmActions.GetRealmTokenAsync("Source", accessToken);
 
-string strRealmToken = JsonSerializer.Serialize(realmToken);
-logger.LogInformation("RealmToken: {0}", strRealmToken);
+
+
+// Login to Source Realm
+LoginResponse srcLoginResponse = await AuthActions.LoginAsync("Source");
+string srcAccessToken = srcLoginResponse.AccessToken;
+logger.LogInformation("Source Access Token: {0}", srcAccessToken);
+
+
+
+// Get Source Realm Token Settings
+RealmToken srcRealmToken = await RealmActions.GetRealmTokenAsync("Source", srcAccessToken);
+string strSrcRealmToken = JsonSerializer.Serialize(srcRealmToken);
+logger.LogInformation("RealmToken: {0}", strSrcRealmToken);
+
+
 
 Console.WriteLine("Hello, World!");
