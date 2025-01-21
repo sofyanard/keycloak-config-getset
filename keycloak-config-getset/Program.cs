@@ -26,8 +26,8 @@ string? dstRealm = configuration["Destination:Realm"];
 string? dstClientId = configuration["Destination:ClientId"];
 string? dstClientSecret = configuration["Destination:ClientSecret"];
 
-logger.LogInformation("{0} - {1} - {2} - {3}", srcHost, srcRealm, srcClientId, srcClientSecret);
-logger.LogInformation("{0} - {1} - {2} - {3}", dstHost, dstRealm, dstClientId, dstClientSecret);
+logger.LogInformation("Source Realm: {0} - {1} - {2} - {3}", srcHost, srcRealm, srcClientId, srcClientSecret);
+logger.LogInformation("Destination Realm: {0} - {1} - {2} - {3}", dstHost, dstRealm, dstClientId, dstClientSecret);
 
 
 
@@ -44,10 +44,25 @@ logger.LogInformation("Source Access Token: {0}", srcAccessToken);
 
 
 
+// Login to Destination Realm
+LoginResponse dstLoginResponse = await AuthActions.LoginAsync("Destination");
+string dstAccessToken = dstLoginResponse.AccessToken;
+logger.LogInformation("Destination Access Token: {0}", srcAccessToken);
+
+
+
 // Get Source Realm Token Settings
 RealmToken srcRealmToken = await RealmActions.GetRealmTokenAsync("Source", srcAccessToken);
 string strSrcRealmToken = JsonSerializer.Serialize(srcRealmToken);
-logger.LogInformation("RealmToken: {0}", strSrcRealmToken);
+logger.LogInformation("Source RealmToken: {0}", strSrcRealmToken);
+
+
+
+// Put Token Settings to Destination Realm
+logger.LogInformation("Put Token Settings to Destination Realm");
+HttpResponseMessage dstPutResponse = await RealmActions.PutRealmTokenAsync("Destination", dstAccessToken, srcRealmToken);
+string srcDstPutResponse = JsonSerializer.Serialize(dstPutResponse);
+logger.LogInformation("HttpResponseMessage: {0}", srcDstPutResponse);
 
 
 

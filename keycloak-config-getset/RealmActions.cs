@@ -4,6 +4,8 @@ using System.Net.Http.Json;
 using System;
 using System.Text.Json;
 using System.Xml.Linq;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Text;
 
 namespace keycloak_config_getset
 {
@@ -53,6 +55,55 @@ namespace keycloak_config_getset
                 _logger?.LogInformation("RealmToken: {0}", strRealmToken);
 
                 return realmToken;
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError(e, e.Message);
+                throw;
+            }
+        }
+
+        internal static async Task<HttpResponseMessage> PutRealmTokenAsync(string env, string accessToken, RealmToken srcRealmToken)
+        {
+            string? host = _configuration?[$"{env}:Host"];
+            string? realm = _configuration?[$"{env}:Realm"];
+
+            string? realmTokenUrl = $"{host}/admin/realms/{realm}";
+            _logger?.LogInformation("Realm Token Url: {0}", realmTokenUrl);
+
+            // Bypass SSL certificate validation
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
+            };
+
+            using var httpClient = new HttpClient(handler);
+
+            try
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+                string jsonData = JsonSerializer.Serialize(srcRealmToken);
+                _logger?.LogInformation("Request Content: {0}", jsonData);
+
+                StringContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await httpClient.PutAsync(realmTokenUrl, content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger?.LogInformation("Request status is success");
+                    string responseData = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Response Data: {responseData}");
+                }
+                else
+                {
+                    _logger?.LogWarning("Request status is: {0}", response.StatusCode);
+                    string errorData = await response.Content.ReadAsStringAsync();
+                    _logger?.LogWarning("Response Content: {0}", errorData);
+                }
+
+                return response;
             }
             catch (Exception e)
             {
