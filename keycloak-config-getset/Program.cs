@@ -29,11 +29,13 @@ string? dstClientSecret = configuration["Destination:ClientSecret"];
 logger.LogInformation("Source Realm: {0} - {1} - {2} - {3}", srcHost, srcRealm, srcClientId, srcClientSecret);
 logger.LogInformation("Destination Realm: {0} - {1} - {2} - {3}", dstHost, dstRealm, dstClientId, dstClientSecret);
 
-
+AppModels.PauseMessage("Loading Configuration...");
 
 // Initialize Actions Classes
 AuthActions.Initialize(logger, configuration);
 RealmActions.Initialize(logger, configuration);
+
+AppModels.PauseMessage("Initializing...");
 
 
 
@@ -42,6 +44,8 @@ LoginResponse srcLoginResponse = await AuthActions.LoginAsync("Source");
 string srcAccessToken = srcLoginResponse.AccessToken;
 logger.LogInformation("Source Access Token: {0}", srcAccessToken);
 
+AppModels.PauseMessage("Login to Source Realm...");
+
 
 
 // Login to Destination Realm
@@ -49,20 +53,45 @@ LoginResponse dstLoginResponse = await AuthActions.LoginAsync("Destination");
 string dstAccessToken = dstLoginResponse.AccessToken;
 logger.LogInformation("Destination Access Token: {0}", srcAccessToken);
 
-
-
-// Get Source Realm Token Settings
-RealmToken srcRealmToken = await RealmActions.GetRealmTokenAsync("Source", srcAccessToken);
-string strSrcRealmToken = JsonSerializer.Serialize(srcRealmToken);
-logger.LogInformation("Source RealmToken: {0}", strSrcRealmToken);
+AppModels.PauseMessage("Login to Destination Realm...");
 
 
 
-// Put Token Settings to Destination Realm
-logger.LogInformation("Put Token Settings to Destination Realm");
-HttpResponseMessage dstPutResponse = await RealmActions.PutRealmTokenAsync("Destination", dstAccessToken, srcRealmToken);
-string srcDstPutResponse = JsonSerializer.Serialize(dstPutResponse);
-logger.LogInformation("HttpResponseMessage: {0}", srcDstPutResponse);
+///////////////
+// Main Menu //
+///////////////
+bool exit = false;
+
+AppModels.ShowMenu(AppModels.GetMainMenu());
+string? input = Console.ReadLine();
+
+while (!exit)
+{
+    if (input.Equals("1"))
+    {
+        // Get Source Realm Token Settings
+        RealmToken srcRealmToken = await RealmActions.GetRealmTokenAsync("Source", srcAccessToken);
+        string strSrcRealmToken = JsonSerializer.Serialize(srcRealmToken);
+        logger.LogInformation("Source RealmToken: {0}", strSrcRealmToken);
+
+        AppModels.PauseMessage("Get Source Realm Token Settings...");
+
+        // Put Token Settings to Destination Realm
+        logger.LogInformation("Put Token Settings to Destination Realm");
+        HttpResponseMessage dstPutResponse = await RealmActions.PutRealmTokenAsync("Destination", dstAccessToken, srcRealmToken);
+        string srcDstPutResponse = JsonSerializer.Serialize(dstPutResponse);
+        logger.LogInformation("HttpResponseMessage: {0}", srcDstPutResponse);
+
+        AppModels.PauseMessage("Put Token Settings to Destination Realm...");
+
+        AppModels.ShowMenu(AppModels.GetMainMenu());
+        input = Console.ReadLine();
+    }
+    else
+    {
+        exit = true;
+    }
+}
 
 
 
