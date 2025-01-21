@@ -87,6 +87,20 @@ while (!exit)
         AppModels.ShowMenu(AppModels.GetMainMenu());
         input = Console.ReadLine();
     }
+    else if (input.Equals("2"))
+    {
+        // Get All Authentication Flows
+        List<Authentication> listAuthentication = await RealmActions.GetAllAuthenticationFlowAsync("Source", srcAccessToken);
+        string strListAuthentication = JsonSerializer.Serialize(listAuthentication);
+        logger.LogInformation("List Authentication: {0}", strListAuthentication);
+
+        AppModels.PauseMessage("Get All Authentication Flows...");
+
+
+
+        AppModels.ShowMenu(AppModels.GetMainMenu());
+        input = Console.ReadLine();
+    }
     else
     {
         exit = true;

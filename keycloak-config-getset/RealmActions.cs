@@ -107,5 +107,47 @@ namespace keycloak_config_getset
                 throw;
             }
         }
+
+        internal static async Task<List<Authentication>> GetAllAuthenticationFlowAsync(string env, string accessToken)
+        {
+            string? host = _configuration?[$"{env}:Host"];
+            string? realm = _configuration?[$"{env}:Realm"];
+
+            string? authFlowUrl = $"{host}/admin/realms/{realm}/authentication/flows";
+            _logger?.LogInformation("Realm Token Url: {0}", authFlowUrl);
+
+            // Bypass SSL certificate validation
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
+            };
+
+            using var httpClient = new HttpClient(handler);
+
+            try
+            {
+                _logger?.LogInformation("Starting request...");
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+                var request = new HttpRequestMessage(HttpMethod.Get, authFlowUrl);
+                var response = await httpClient.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+                _logger?.LogInformation("Request status is success");
+                string jsonString = await response.Content.ReadAsStringAsync();
+                _logger?.LogInformation("Response Content: {0}", jsonString);
+
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                List<Authentication>? listAuthentication = JsonSerializer.Deserialize<List<Authentication>>(jsonString, options);
+
+                string strListAuthentication = JsonSerializer.Serialize(listAuthentication);
+                _logger?.LogInformation("List Authentication: {0}", strListAuthentication);
+
+                return listAuthentication;
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError(e, e.Message);
+                throw;
+            }
+        }
     }
 }

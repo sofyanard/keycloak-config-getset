@@ -127,4 +127,50 @@ namespace keycloak_config_getset
         [JsonPropertyName("attributes")]
         public RealmAttribute? TokenAttribute { get; set; }
     }
+
+    internal class AuthenticationExecution
+    {
+        [JsonPropertyName("authenticator")]
+        public string Authenticator { get; set; }
+
+        [JsonPropertyName("authenticatorFlow")]
+        public bool AuthenticatorFlow { get; set; }
+
+        [JsonPropertyName("requirement")]
+        public string Requirement { get; set; }
+
+        [JsonPropertyName("priority")]
+        public int Priority { get; set; }
+
+        [JsonPropertyName("userSetupAllowed")]
+        public bool UserSetupAllowed { get; set; }
+
+        [JsonPropertyName("autheticatorFlow")]
+        public bool AutheticatorFlow { get; set; }
+    }
+
+
+    internal class Authentication
+    {
+        [JsonPropertyName("id")]
+        public Guid Id { get; set; }
+
+        [JsonPropertyName("alias")]
+        public string Alias { get; set; }
+
+        [JsonPropertyName("description")]
+        public string Description { get; set; }
+
+        [JsonPropertyName("providerId")]
+        public string ProviderId { get; set; }
+
+        [JsonPropertyName("topLevel")]
+        public bool TopLevel { get; set; }
+
+        [JsonPropertyName("builtIn")]
+        public bool BuiltIn { get; set; }
+
+        [JsonPropertyName("authenticationExecutions")]
+        public List<AuthenticationExecution>? AuthenticationExecutions { get; set; }
+    }
 }
