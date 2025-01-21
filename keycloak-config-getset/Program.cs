@@ -1,6 +1,7 @@
 ﻿using keycloak_config_getset;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 using System.Text.Json;
 
 using var loggerFactory = LoggerFactory.Create(builder =>
@@ -96,7 +97,33 @@ while (!exit)
 
         AppModels.PauseMessage("Get All Authentication Flows...");
 
+        // Authentication Flow Custom Menu
+        List<CustomMenu> listAuthenticationFlowMenu = AppModels.ConvertToCustomMenu(listAuthentication, "Alias");
+        foreach (CustomMenu authenticationFlowMenu in listAuthenticationFlowMenu)
+        {
+            Console.WriteLine($"{authenticationFlowMenu.Id} - {authenticationFlowMenu.Name}");
+        }
 
+        Console.WriteLine("Choose Sequence Number Authentication Flow to be copied, separate with coma(,)!");
+        string? inputFlow = Console.ReadLine();
+        try
+        {
+            int i;
+            CustomMenu? displayedCustomMenu;
+            string[] choosenInputFlow = inputFlow.Split(",");
+            foreach (string choice in choosenInputFlow)
+            {
+                choice.Trim();
+                i = int.Parse(choice);
+                displayedCustomMenu = listAuthenticationFlowMenu.FirstOrDefault(x => x.Id == i);
+                Console.WriteLine(displayedCustomMenu?.Name);
+            }
+        }
+        catch (Exception e)
+        {
+            logger?.LogError(e, e.Message);
+            throw;
+        }
 
         AppModels.ShowMenu(AppModels.GetMainMenu());
         input = Console.ReadLine();

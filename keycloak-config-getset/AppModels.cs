@@ -52,7 +52,82 @@ namespace keycloak_config_getset
 
             Console.ReadKey();
         }
+
+        internal static List<Dictionary<int, string>> ConvertToDictionaryList<T>(List<T> objects, string propertyName)
+        {
+            var listOfDictionaries = new List<Dictionary<int, string>>();
+
+            int index = 1; // Start the sequential key from 1
+            foreach (var obj in objects)
+            {
+                // Use reflection to get the property value
+                var propertyInfo = typeof(T).GetProperty(propertyName);
+                if (propertyInfo == null)
+                {
+                    throw new ArgumentException($"Property '{propertyName}' does not exist on type '{typeof(T).Name}'.");
+                }
+
+                var propertyValue = propertyInfo.GetValue(obj)?.ToString();
+                if (propertyValue != null)
+                {
+                    var dictionary = new Dictionary<int, string>
+                {
+                    { index, propertyValue }
+                };
+
+                    listOfDictionaries.Add(dictionary);
+                    index++;
+                }
+                else
+                {
+                    throw new ArgumentException($"Property '{propertyName}' has a null value on one of the objects.");
+                }
+            }
+
+            return listOfDictionaries;
+        }
+
+        internal static List<CustomMenu> ConvertToCustomMenu<T>(List<T> objects, string propertyName)
+        {
+            var listCustomMenu = new List<CustomMenu>();
+
+            int index = 1; // Start the sequential key from 1
+            foreach (var obj in objects)
+            {
+                // Use reflection to get the property value
+                var propertyInfo = typeof(T).GetProperty(propertyName);
+                if (propertyInfo == null)
+                {
+                    throw new ArgumentException($"Property '{propertyName}' does not exist on type '{typeof(T).Name}'.");
+                }
+
+                var propertyValue = propertyInfo.GetValue(obj)?.ToString();
+                if (propertyValue != null)
+                {
+                    CustomMenu customMenu = new CustomMenu(index, propertyValue);
+
+                    listCustomMenu.Add(customMenu);
+                    index++;
+                }
+                else
+                {
+                    throw new ArgumentException($"Property '{propertyName}' has a null value on one of the objects.");
+                }
+            }
+
+            return listCustomMenu;
+        }
     }
-    
-        
+
+    internal class CustomMenu
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+
+        public CustomMenu(int id, string Name)
+        {
+            this.Id = id;
+            this.Name = Name;
+        }
+    }
 }
