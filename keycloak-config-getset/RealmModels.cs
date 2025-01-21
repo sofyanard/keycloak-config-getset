@@ -101,6 +101,10 @@ namespace keycloak_config_getset
         public int AccessTokenLifespanForImplicitFlow { get; set; }
 
         [Description("Client login timeout")]
+        [JsonPropertyName("accessCodeLifespan")]
+        public int AccessCodeLifespan { get; set; }
+
+        [Description("Login timeout")]
         [JsonPropertyName("accessCodeLifespanLogin")]
         public int AccessCodeLifespanLogin { get; set; }
 
@@ -115,6 +119,10 @@ namespace keycloak_config_getset
         [Description("Default Admin-Initiated Action Lifespan")]
         [JsonPropertyName("actionTokenGeneratedByAdminLifespan")]
         public int ActionTokenGeneratedByAdminLifespan { get; set; }
+
+        [Description("OAuth 2.0 Device Code Lifespan")]
+        [JsonPropertyName("oauth2DeviceCodeLifespan")]
+        public int Oauth2DeviceCodeLifespan { get; set; }
 
         [JsonPropertyName("attributes")]
         public RealmAttribute? TokenAttribute { get; set; }
