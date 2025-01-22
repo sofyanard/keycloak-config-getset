@@ -104,40 +104,60 @@ while (!exit)
             Console.WriteLine($"{authenticationFlowMenu.Id} - {authenticationFlowMenu.Name}");
         }
 
+        // Selection of Authentication Flow to process
         Console.WriteLine("Choose Sequence Number Authentication Flow to be copied, separate with coma(,)!");
         string? inputFlow = Console.ReadLine();
-        List<CustomMenu> listSelectedAuthenticationFlow = new List<CustomMenu>();
+        List<CustomMenu> listSelectedAuthenticationMenu = new List<CustomMenu>();
+        List<Authentication> listSelectedAuthentication = new List<Authentication>();
         try
         {
             int i;
-            CustomMenu? selectedAuthenticationFlow;
             string[] choosenInputFlow = inputFlow.Split(",");
             foreach (string choice in choosenInputFlow)
             {
                 choice.Trim();
                 i = int.Parse(choice);
-                selectedAuthenticationFlow = listAuthenticationFlowMenu.FirstOrDefault(x => x.Id == i);
-                if (selectedAuthenticationFlow == null)
+                CustomMenu? selectedAuthenticationMenu = listAuthenticationFlowMenu.FirstOrDefault(x => x.Id == i);
+                Authentication? toBeAddAuthentication = listAuthentication.FirstOrDefault(x => x.Alias == selectedAuthenticationMenu?.Name);
+                if ((selectedAuthenticationMenu == null) || (toBeAddAuthentication == null))
                 {
                     throw new Exception("Wrong number to choose!");
                 }
-                string strSelectedAuthenticationFlow = JsonSerializer.Serialize(selectedAuthenticationFlow);
-                logger?.LogInformation("DisplayedCustomMenu: {0}", strSelectedAuthenticationFlow);
-                listSelectedAuthenticationFlow.Add(selectedAuthenticationFlow);
+                string strSelectedAuthenticationMenu = JsonSerializer.Serialize(selectedAuthenticationMenu);
+                logger?.LogInformation("Selected Authentication Menu: {0}", strSelectedAuthenticationMenu);
+
+                listSelectedAuthenticationMenu.Add(selectedAuthenticationMenu);
+                listSelectedAuthentication.Add(toBeAddAuthentication);
             }
-            string strListSelectedAuthenticationFlow = JsonSerializer.Serialize(listSelectedAuthenticationFlow);
-            logger?.LogInformation("ListSelectedAuthenticationFlow: {0}", strListSelectedAuthenticationFlow);
-
-            AppModels.ShowCustomMenu(listSelectedAuthenticationFlow, "Selected Authentication Flow");
-            AppModels.PauseMessage("Are You sure to set these Authentication Flow?");
-
-
         }
         catch (Exception e)
         {
             logger?.LogError(e, e.Message);
             throw;
         }
+
+        string strListSelectedAuthentication = JsonSerializer.Serialize(listSelectedAuthentication);
+        logger?.LogInformation("List Selected Authentication: {0}", strListSelectedAuthentication);
+
+        AppModels.ShowCustomMenu(listSelectedAuthenticationMenu, "Selected Authentication Flow");
+        AppModels.PauseMessage("Are You sure to set these Authentication Flow?");
+
+        // POST Authentication Flow to Destination Realm
+        int j = 0;
+        foreach (Authentication selectedAuthentication in listSelectedAuthentication)
+        {
+            logger.LogInformation("POST Authentication Flow to Destination Realm");
+            AuthenticationPost authenticationToPost = RealmActions.GetAuthenticationPostFromAuthentication(selectedAuthentication);
+            string strAuthenticationToPost = JsonSerializer.Serialize(authenticationToPost);
+            logger?.LogInformation("Authentication To Post: {0}", strAuthenticationToPost);
+
+            HttpResponseMessage dstPostResponse = await RealmActions.PostAuthenticationFlowAsync("Destination", dstAccessToken, authenticationToPost);
+            string strDstPostResponse = JsonSerializer.Serialize(dstPostResponse);
+            logger.LogInformation("HttpResponseMessage: {0}", strDstPostResponse);
+
+            j++;
+        }
+        AppModels.PauseMessage($"{j} Authentication Flow(s) have been posted!");
 
         AppModels.ShowMenu(AppModels.GetMainMenu());
         input = Console.ReadLine();

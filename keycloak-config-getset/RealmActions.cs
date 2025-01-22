@@ -149,5 +149,67 @@ namespace keycloak_config_getset
                 throw;
             }
         }
+
+        internal static AuthenticationPost GetAuthenticationPostFromAuthentication(Authentication authentication)
+        {
+            AuthenticationPost authenticationPost = new AuthenticationPost();
+
+            authenticationPost.Alias = authentication.Alias;
+            authenticationPost.Description = authentication.Description;
+            authenticationPost.ProviderId = authentication.ProviderId;
+            authenticationPost.TopLevel = authentication.TopLevel;
+            authenticationPost.BuiltIn = authentication.BuiltIn;
+
+            return authenticationPost;
+        }
+
+        internal static async Task<HttpResponseMessage> PostAuthenticationFlowAsync(string env, string accessToken, AuthenticationPost authenticationPost)
+        {
+            string? host = _configuration?[$"{env}:Host"];
+            string? realm = _configuration?[$"{env}:Realm"];
+
+            string? authFlowUrl = $"{host}/admin/realms/{realm}/authentication/flows";
+            _logger?.LogInformation("Realm Token Url: {0}", authFlowUrl);
+
+            // Bypass SSL certificate validation
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
+            };
+
+            using var httpClient = new HttpClient(handler);
+
+            try
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+                string jsonData = JsonSerializer.Serialize(authenticationPost);
+                _logger?.LogInformation("Request Content: {0}", jsonData);
+
+                StringContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await httpClient.PostAsync(authFlowUrl, content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger?.LogInformation("Request status is success");
+                    string responseData = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Response Data: {responseData}");
+                }
+                else
+                {
+                    _logger?.LogWarning("Request status is: {0}", response.StatusCode);
+                    string errorData = await response.Content.ReadAsStringAsync();
+                    _logger?.LogWarning("Response Content: {0}", errorData);
+                }
+
+                return response;
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError(e, e.Message);
+                throw;
+            }
+        }
     }
 }

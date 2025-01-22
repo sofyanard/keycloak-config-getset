@@ -173,4 +173,22 @@ namespace keycloak_config_getset
         [JsonPropertyName("authenticationExecutions")]
         public List<AuthenticationExecution>? AuthenticationExecutions { get; set; }
     }
+
+    internal class AuthenticationPost
+    {
+        [JsonPropertyName("alias")]
+        public string Alias { get; set; }
+
+        [JsonPropertyName("providerId")]
+        public string ProviderId { get; set; }
+
+        [JsonPropertyName("description")]
+        public string Description { get; set; }
+
+        [JsonPropertyName("topLevel")]
+        public bool TopLevel { get; set; }
+
+        [JsonPropertyName("builtIn")]
+        public bool BuiltIn { get; set; }
+    }
 }
