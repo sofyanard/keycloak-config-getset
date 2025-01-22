@@ -106,18 +106,32 @@ while (!exit)
 
         Console.WriteLine("Choose Sequence Number Authentication Flow to be copied, separate with coma(,)!");
         string? inputFlow = Console.ReadLine();
+        List<CustomMenu> listSelectedAuthenticationFlow = new List<CustomMenu>();
         try
         {
             int i;
-            CustomMenu? displayedCustomMenu;
+            CustomMenu? selectedAuthenticationFlow;
             string[] choosenInputFlow = inputFlow.Split(",");
             foreach (string choice in choosenInputFlow)
             {
                 choice.Trim();
                 i = int.Parse(choice);
-                displayedCustomMenu = listAuthenticationFlowMenu.FirstOrDefault(x => x.Id == i);
-                Console.WriteLine(displayedCustomMenu?.Name);
+                selectedAuthenticationFlow = listAuthenticationFlowMenu.FirstOrDefault(x => x.Id == i);
+                if (selectedAuthenticationFlow == null)
+                {
+                    throw new Exception("Wrong number to choose!");
+                }
+                string strSelectedAuthenticationFlow = JsonSerializer.Serialize(selectedAuthenticationFlow);
+                logger?.LogInformation("DisplayedCustomMenu: {0}", strSelectedAuthenticationFlow);
+                listSelectedAuthenticationFlow.Add(selectedAuthenticationFlow);
             }
+            string strListSelectedAuthenticationFlow = JsonSerializer.Serialize(listSelectedAuthenticationFlow);
+            logger?.LogInformation("ListSelectedAuthenticationFlow: {0}", strListSelectedAuthenticationFlow);
+
+            AppModels.ShowCustomMenu(listSelectedAuthenticationFlow, "Selected Authentication Flow");
+            AppModels.PauseMessage("Are You sure to set these Authentication Flow?");
+
+
         }
         catch (Exception e)
         {

@@ -40,13 +40,32 @@ namespace keycloak_config_getset
             Console.ForegroundColor = originalColor;
         }
 
+        internal static void ShowCustomMenu(List<CustomMenu> menu, string title, bool waitKey = false)
+        {
+            var originalColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Cyan;
+
+            Console.WriteLine(title);
+            Console.WriteLine("==============================");
+            foreach (var item in menu)
+            {
+                Console.WriteLine($"{item.Id}. {item.Name}");
+            }
+            if (waitKey)
+            {
+                Console.Write("Your Choose: ");
+            }
+
+            Console.ForegroundColor = originalColor;
+        }
+
         internal static void PauseMessage(string message)
         {
             var originalColor = Console.ForegroundColor;
             Console.ForegroundColor = ConsoleColor.Cyan;
 
             Console.WriteLine(message);
-            Console.WriteLine("Press any key to continue...");
+            Console.WriteLine("Press any key to continue... (or Ctrl-C to cancel)");
 
             Console.ForegroundColor = originalColor;
 
