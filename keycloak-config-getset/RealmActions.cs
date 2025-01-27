@@ -150,6 +150,48 @@ namespace keycloak_config_getset
             }
         }
 
+        internal static async Task<List<AuthenticationExecution>> GetAllExecutionsOfAFlowAsync(string env, string accessToken, string flowName)
+        {
+            string? host = _configuration?[$"{env}:Host"];
+            string? realm = _configuration?[$"{env}:Realm"];
+
+            string? url = $"{host}/admin/realms/{realm}/authentication/flows/{flowName}/executions";
+            _logger?.LogInformation("Url: {0}", url);
+
+            // Bypass SSL certificate validation
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
+            };
+
+            using var httpClient = new HttpClient(handler);
+
+            try
+            {
+                _logger?.LogInformation("Starting request...");
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                var response = await httpClient.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+                _logger?.LogInformation("Request status is success");
+                string jsonString = await response.Content.ReadAsStringAsync();
+                _logger?.LogInformation("Response Content: {0}", jsonString);
+
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                List<AuthenticationExecution>? listExecutions = JsonSerializer.Deserialize<List<AuthenticationExecution>>(jsonString, options);
+
+                string strListExecutions = JsonSerializer.Serialize(listExecutions);
+                _logger?.LogInformation("List Executions: {0}", strListExecutions);
+
+                return listExecutions;
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError(e, e.Message);
+                throw;
+            }
+        }
+
         internal static AuthenticationPost GetAuthenticationPostFromAuthentication(Authentication authentication)
         {
             AuthenticationPost authenticationPost = new AuthenticationPost();
@@ -169,7 +211,7 @@ namespace keycloak_config_getset
             string? realm = _configuration?[$"{env}:Realm"];
 
             string? authFlowUrl = $"{host}/admin/realms/{realm}/authentication/flows";
-            _logger?.LogInformation("Realm Token Url: {0}", authFlowUrl);
+            _logger?.LogInformation("Authentication Flow Url: {0}", authFlowUrl);
 
             // Bypass SSL certificate validation
             var handler = new HttpClientHandler
@@ -189,6 +231,64 @@ namespace keycloak_config_getset
                 StringContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
 
                 HttpResponseMessage response = await httpClient.PostAsync(authFlowUrl, content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger?.LogInformation("Request status is success");
+                    string responseData = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Response Data: {responseData}");
+                }
+                else
+                {
+                    _logger?.LogWarning("Request status is: {0}", response.StatusCode);
+                    string errorData = await response.Content.ReadAsStringAsync();
+                    _logger?.LogWarning("Response Content: {0}", errorData);
+                }
+
+                return response;
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError(e, e.Message);
+                throw;
+            }
+        }
+
+        internal static AuthenticationExecutionPost GetAuthenticationExecutionPostFromAuthenticationExecution(AuthenticationExecution authenticationExecution)
+        {
+            AuthenticationExecutionPost authenticationExecutionPost = new AuthenticationExecutionPost();
+
+            authenticationExecutionPost.Provider = authenticationExecution.Authenticator;
+
+            return authenticationExecutionPost;
+        }
+
+        internal static async Task<HttpResponseMessage> PostAuthenticationExecutionAsync(string env, string accessToken, string flow, AuthenticationExecutionPost authenticationExecutionPost)
+        {
+            string? host = _configuration?[$"{env}:Host"];
+            string? realm = _configuration?[$"{env}:Realm"];
+
+            string? authExecutionUrl = $"{host}/admin/realms/{realm}/authentication/flows/{flow}/executions/execution";
+            _logger?.LogInformation("Authentication Execution Url: {0}", authExecutionUrl);
+
+            // Bypass SSL certificate validation
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
+            };
+
+            using var httpClient = new HttpClient(handler);
+
+            try
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+                string jsonData = JsonSerializer.Serialize(authenticationExecutionPost);
+                _logger?.LogInformation("Request Content: {0}", jsonData);
+
+                StringContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await httpClient.PostAsync(authExecutionUrl, content);
 
                 if (response.IsSuccessStatusCode)
                 {

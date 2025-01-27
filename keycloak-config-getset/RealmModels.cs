@@ -130,14 +130,26 @@ namespace keycloak_config_getset
 
     internal class AuthenticationExecution
     {
-        [JsonPropertyName("authenticator")]
-        public string Authenticator { get; set; }
+        [JsonPropertyName("id")]
+        public string? Id { get; set; }
 
-        [JsonPropertyName("authenticatorFlow")]
-        public bool AuthenticatorFlow { get; set; }
+        [JsonPropertyName("displayName")]
+        public string? DisplayName { get; set; }
+
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
+
+        [JsonPropertyName("authenticator")]
+        public string? Authenticator { get; set; }
+
+        [JsonPropertyName("authenticationFlow")]
+        public bool AuthenticationFlow { get; set; }
 
         [JsonPropertyName("requirement")]
-        public string Requirement { get; set; }
+        public string? Requirement { get; set; }
+
+        [JsonPropertyName("requirementChoices")]
+        public List<string>? RequirementChoices { get; set; }
 
         [JsonPropertyName("priority")]
         public int Priority { get; set; }
@@ -149,6 +161,11 @@ namespace keycloak_config_getset
         public bool AutheticatorFlow { get; set; }
     }
 
+    internal class AuthenticationExecutionPost
+    {
+        [JsonPropertyName("provider")]
+        public string? Provider { get; set; }
+    }
 
     internal class Authentication
     {
@@ -156,13 +173,13 @@ namespace keycloak_config_getset
         public Guid Id { get; set; }
 
         [JsonPropertyName("alias")]
-        public string Alias { get; set; }
+        public string? Alias { get; set; }
 
         [JsonPropertyName("description")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [JsonPropertyName("providerId")]
-        public string ProviderId { get; set; }
+        public string? ProviderId { get; set; }
 
         [JsonPropertyName("topLevel")]
         public bool TopLevel { get; set; }
@@ -177,13 +194,13 @@ namespace keycloak_config_getset
     internal class AuthenticationPost
     {
         [JsonPropertyName("alias")]
-        public string Alias { get; set; }
+        public string? Alias { get; set; }
 
         [JsonPropertyName("providerId")]
-        public string ProviderId { get; set; }
+        public string? ProviderId { get; set; }
 
         [JsonPropertyName("description")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [JsonPropertyName("topLevel")]
         public bool TopLevel { get; set; }
@@ -191,4 +208,6 @@ namespace keycloak_config_getset
         [JsonPropertyName("builtIn")]
         public bool BuiltIn { get; set; }
     }
+
+    
 }

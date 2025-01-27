@@ -146,7 +146,8 @@ while (!exit)
         int j = 0;
         foreach (Authentication selectedAuthentication in listSelectedAuthentication)
         {
-            logger.LogInformation("POST Authentication Flow to Destination Realm");
+            // POST Authentication Flow - Level 0
+            logger.LogInformation("POST Authentication Flow - Level 0");
             AuthenticationPost authenticationToPost = RealmActions.GetAuthenticationPostFromAuthentication(selectedAuthentication);
             string strAuthenticationToPost = JsonSerializer.Serialize(authenticationToPost);
             logger?.LogInformation("Authentication To Post: {0}", strAuthenticationToPost);
@@ -154,6 +155,47 @@ while (!exit)
             HttpResponseMessage dstPostResponse = await RealmActions.PostAuthenticationFlowAsync("Destination", dstAccessToken, authenticationToPost);
             string strDstPostResponse = JsonSerializer.Serialize(dstPostResponse);
             logger.LogInformation("HttpResponseMessage: {0}", strDstPostResponse);
+
+            // record list of nested flow in the loop
+            List<Authentication> listOfNestedFlow = new List<Authentication>();
+            listOfNestedFlow.Clear();
+            listOfNestedFlow.Add(selectedAuthentication);
+
+            // GET All Executions for each Flow
+            logger.LogInformation("GET All Executions for Flow: {0}", selectedAuthentication.Alias);
+            List<AuthenticationExecution> listExecutions = await RealmActions.GetAllExecutionsOfAFlowAsync("Source", srcAccessToken, selectedAuthentication.Alias);
+            string strListExecutions = JsonSerializer.Serialize(listExecutions);
+            logger?.LogInformation("List Executions: {0}", strListExecutions);
+
+            foreach (AuthenticationExecution executions in listExecutions)
+            {
+                string strExecutions = JsonSerializer.Serialize(executions);
+                logger?.LogInformation("Processing Executions: {0}", strExecutions);
+
+                // each item can be either an execution or a nested flow (level 1 and so on, let's first check !
+                if (executions.AuthenticationFlow)
+                {
+                    // POST Nested Flow
+                    logger?.LogInformation("********** {0} is a nested flow", executions.DisplayName);
+                }
+                else
+                {
+                    // POST Execution
+                    logger?.LogInformation("********** {0} is an execution", executions.DisplayName);
+                }
+
+                // POST Authentication Flow Execution
+                /*
+                logger.LogInformation("POST Authentication Flow Execution");
+                AuthenticationExecutionPost authenticationExecutionPost = RealmActions.GetAuthenticationExecutionPostFromAuthenticationExecution(authenticationExecution);
+                string strAuthenticationExecutionPost = JsonSerializer.Serialize(authenticationExecutionPost);
+                logger?.LogInformation("Authentication Execution To Post: {0}", strAuthenticationExecutionPost);
+
+                HttpResponseMessage afePostResponse = await RealmActions.PostAuthenticationExecutionAsync("Destination", dstAccessToken, selectedAuthentication.Alias, authenticationExecutionPost);
+                string strAfePostResponse = JsonSerializer.Serialize(afePostResponse);
+                logger.LogInformation("HttpResponseMessage: {0}", strAfePostResponse);
+                */
+            }
 
             j++;
         }
