@@ -177,7 +177,7 @@ while (!exit)
                 int eLevel = executions.Level;
                 int eIndex = executions.Index;
 
-                // each item can be either an execution or a nested flow (level 1 and so on, let's first check !
+                // each item can be either an execution or a nested flow (level 1 and so on), let's first check !
                 if (executions.AuthenticationFlow)
                 {
                     // POST New Nested Flow
@@ -200,24 +200,63 @@ while (!exit)
                     
                     // Prepare new nested flow to be POST
                     NestedAuthenticationPost nestedFlowToPost = RealmActions.GetNestedAuthenticationPostFromAuthentication(flowToBeCoppied);
+                    string strNestedFlowToPost = JsonSerializer.Serialize(nestedFlowToPost);
+                    logger?.LogInformation("Nested Flow To Post: {0}", strNestedFlowToPost);
 
-                    // POST new nested flow
+                    // POST New Nested Flow
                     HttpResponseMessage nfdPostResponse = await RealmActions.PostExecutionsFlowAsync("Destination", dstAccessToken, listOfNestedFlow[eLevel], nestedFlowToPost);
                     string strNfdPostResponse = JsonSerializer.Serialize(nfdPostResponse);
                     logger.LogInformation("HttpResponseMessage: {0}", strNfdPostResponse);
                 }
                 else
                 {
-                    // POST New Execution
+                    // Prepare new execution to be POST
                     logger.LogInformation("POST New Execution");
                     AuthenticationExecutionPost authenticationExecutionPost = RealmActions.GetAuthenticationExecutionPostFromAuthenticationExecution(executions);
                     string strAuthenticationExecutionPost = JsonSerializer.Serialize(authenticationExecutionPost);
                     logger?.LogInformation("Execution To Post: {0}", strAuthenticationExecutionPost);
 
+                    // POST New Execution
                     HttpResponseMessage afePostResponse = await RealmActions.PostExecutionsExecutionAsync("Destination", dstAccessToken, listOfNestedFlow[eLevel], authenticationExecutionPost);
                     string strAfePostResponse = JsonSerializer.Serialize(afePostResponse);
                     logger.LogInformation("HttpResponseMessage: {0}", strAfePostResponse);
                 }
+            }
+
+            // PUT Executions to update Requirement
+
+            // GET All Executions for each Flow in the Destination Realm
+            logger.LogInformation("GET All Executions for Flow: {0} in the Destination Realm", selectedAuthentication.Alias);
+            List<AuthenticationExecution> listDestinationExecutions = await RealmActions.GetAllExecutionsOfAFlowAsync("Destination", dstAccessToken, selectedAuthentication.Alias!);
+            string strListDestinationExecutions = JsonSerializer.Serialize(listDestinationExecutions);
+            logger?.LogInformation("List of Destination Executions: {0}", strListDestinationExecutions);
+
+            foreach (AuthenticationExecution destinationExecution in listDestinationExecutions)
+            {
+                string strDestinationExecution = JsonSerializer.Serialize(destinationExecution);
+                logger?.LogInformation("Destination Execution: {0}", strDestinationExecution);
+
+                // Get each equivalent in the source, for each destination execution
+                AuthenticationExecution sourceExecution = listExecutions.FirstOrDefault(x => x.DisplayName == destinationExecution.DisplayName)!;
+
+                if (sourceExecution == null)
+                {
+                    logger?.LogError("Equivalent Source Execution not found!");
+                    throw new Exception("Source Execution not found!");
+                }
+
+                string strSourceExecution = JsonSerializer.Serialize(sourceExecution);
+                logger?.LogInformation("Equivalent Source Execution: {0}", strSourceExecution);
+
+                // Prepare execution to be PUT
+                AuthenticationExecutionPut authenticationExecutionPut = RealmActions.GetUpdatedAuthenticationExecutionPutFromSourceToDestination(destinationExecution, sourceExecution);
+                string strAuthenticationExecutionPut = JsonSerializer.Serialize(authenticationExecutionPut);
+                logger?.LogInformation("Execution to PUT: {0}", strAuthenticationExecutionPut);
+
+                // PUT The Execution
+                HttpResponseMessage putExecutionResponse = await RealmActions.PutExecutionsExecutionAsync("Destination", dstAccessToken, selectedAuthentication.Alias!, authenticationExecutionPut);
+                string strPutExecutionResponse = JsonSerializer.Serialize(putExecutionResponse);
+                logger.LogInformation("HttpResponseMessage: {0}", strPutExecutionResponse);
             }
 
             j++;

@@ -317,6 +317,15 @@ namespace keycloak_config_getset
             return authenticationExecutionPost;
         }
 
+        internal static AuthenticationExecutionPut GetUpdatedAuthenticationExecutionPutFromSourceToDestination(AuthenticationExecution destination, AuthenticationExecution source)
+        {
+            AuthenticationExecutionPut putExecution = new AuthenticationExecutionPut();
+            putExecution.Id = destination.Id;
+            putExecution.Requirement = source.Requirement;
+
+            return putExecution;
+        }
+
         internal static async Task<HttpResponseMessage> PostExecutionsExecutionAsync(string env, string accessToken, string flow, AuthenticationExecutionPost authenticationExecutionPost)
         {
             string? host = _configuration?[$"{env}:Host"];
@@ -392,6 +401,55 @@ namespace keycloak_config_getset
                 StringContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
 
                 HttpResponseMessage response = await httpClient.PostAsync(url, content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger?.LogInformation("Request status is success");
+                    string responseData = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Response Data: {responseData}");
+                }
+                else
+                {
+                    _logger?.LogWarning("Request status is: {0}", response.StatusCode);
+                    string errorData = await response.Content.ReadAsStringAsync();
+                    _logger?.LogWarning("Response Content: {0}", errorData);
+                }
+
+                return response;
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError(e, e.Message);
+                throw;
+            }
+        }
+
+        internal static async Task<HttpResponseMessage> PutExecutionsExecutionAsync(string env, string accessToken, string flow, AuthenticationExecutionPut authenticationExecutionPut)
+        {
+            string? host = _configuration?[$"{env}:Host"];
+            string? realm = _configuration?[$"{env}:Realm"];
+
+            string? url = $"{host}/admin/realms/{realm}/authentication/flows/{flow}/executions";
+            _logger?.LogInformation("Put Execution Url: {0}", url);
+
+            // Bypass SSL certificate validation
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
+            };
+
+            using var httpClient = new HttpClient(handler);
+
+            try
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+                string jsonData = JsonSerializer.Serialize(authenticationExecutionPut);
+                _logger?.LogInformation("Request Content: {0}", jsonData);
+
+                StringContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await httpClient.PutAsync(url, content);
 
                 if (response.IsSuccessStatusCode)
                 {

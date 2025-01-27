@@ -179,6 +179,15 @@ namespace keycloak_config_getset
         public string? Provider { get; set; }
     }
 
+    internal class AuthenticationExecutionPut
+    {
+        [JsonPropertyName("id")]
+        public string? Id { get; set; }
+
+        [JsonPropertyName("requirement")]
+        public string? Requirement { get; set; }
+    }
+
     internal class Authentication
     {
         [JsonPropertyName("id")]
