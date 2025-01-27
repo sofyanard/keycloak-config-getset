@@ -159,6 +159,18 @@ namespace keycloak_config_getset
 
         [JsonPropertyName("autheticatorFlow")]
         public bool AutheticatorFlow { get; set; }
+
+        [JsonPropertyName("flowId")]
+        public string? FlowId { get; set; }
+
+        [JsonPropertyName("providerId")]
+        public string? ProviderId { get; set; }
+
+        [JsonPropertyName("level")]
+        public int Level { get; set; }
+
+        [JsonPropertyName("index")]
+        public int Index { get; set; }
     }
 
     internal class AuthenticationExecutionPost
@@ -209,5 +221,18 @@ namespace keycloak_config_getset
         public bool BuiltIn { get; set; }
     }
 
-    
+    internal class NestedAuthenticationPost
+    {
+        [JsonPropertyName("alias")]
+        public string? Alias { get; set; }
+
+        [JsonPropertyName("type")]
+        public string? Type { get; set; }
+
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
+
+        [JsonPropertyName("provider")]
+        public string? Provider { get; set; }
+    }
 }

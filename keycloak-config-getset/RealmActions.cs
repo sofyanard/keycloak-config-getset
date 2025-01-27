@@ -150,6 +150,48 @@ namespace keycloak_config_getset
             }
         }
 
+        internal static async Task<Authentication> GetFlowByIdAsync(string env, string accessToken, string flowId)
+        {
+            string? host = _configuration?[$"{env}:Host"];
+            string? realm = _configuration?[$"{env}:Realm"];
+
+            string? url = $"{host}/admin/realms/{realm}/authentication/flows/{flowId}";
+            _logger?.LogInformation("Realm Token Url: {0}", url);
+
+            // Bypass SSL certificate validation
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
+            };
+
+            using var httpClient = new HttpClient(handler);
+
+            try
+            {
+                _logger?.LogInformation("Starting request...");
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                var response = await httpClient.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+                _logger?.LogInformation("Request status is success");
+                string jsonString = await response.Content.ReadAsStringAsync();
+                _logger?.LogInformation("Response Content: {0}", jsonString);
+
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                Authentication? flow = JsonSerializer.Deserialize<Authentication>(jsonString, options);
+
+                string strFlow = JsonSerializer.Serialize(flow);
+                _logger?.LogInformation("Flow: {0}", strFlow);
+
+                return flow;
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError(e, e.Message);
+                throw;
+            }
+        }
+
         internal static async Task<List<AuthenticationExecution>> GetAllExecutionsOfAFlowAsync(string env, string accessToken, string flowName)
         {
             string? host = _configuration?[$"{env}:Host"];
@@ -205,6 +247,18 @@ namespace keycloak_config_getset
             return authenticationPost;
         }
 
+        internal static NestedAuthenticationPost GetNestedAuthenticationPostFromAuthentication(Authentication authentication)
+        {
+            NestedAuthenticationPost nestedAuthenticationPost = new NestedAuthenticationPost();
+
+            nestedAuthenticationPost.Alias = authentication.Alias;
+            nestedAuthenticationPost.Type = authentication.ProviderId;
+            nestedAuthenticationPost.Description = authentication.Description;
+            nestedAuthenticationPost.Provider = "registration-page-form";
+
+            return nestedAuthenticationPost;
+        }
+
         internal static async Task<HttpResponseMessage> PostAuthenticationFlowAsync(string env, string accessToken, AuthenticationPost authenticationPost)
         {
             string? host = _configuration?[$"{env}:Host"];
@@ -258,12 +312,12 @@ namespace keycloak_config_getset
         {
             AuthenticationExecutionPost authenticationExecutionPost = new AuthenticationExecutionPost();
 
-            authenticationExecutionPost.Provider = authenticationExecution.Authenticator;
+            authenticationExecutionPost.Provider = authenticationExecution.ProviderId;
 
             return authenticationExecutionPost;
         }
 
-        internal static async Task<HttpResponseMessage> PostAuthenticationExecutionAsync(string env, string accessToken, string flow, AuthenticationExecutionPost authenticationExecutionPost)
+        internal static async Task<HttpResponseMessage> PostExecutionsExecutionAsync(string env, string accessToken, string flow, AuthenticationExecutionPost authenticationExecutionPost)
         {
             string? host = _configuration?[$"{env}:Host"];
             string? realm = _configuration?[$"{env}:Realm"];
@@ -289,6 +343,55 @@ namespace keycloak_config_getset
                 StringContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
 
                 HttpResponseMessage response = await httpClient.PostAsync(authExecutionUrl, content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger?.LogInformation("Request status is success");
+                    string responseData = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Response Data: {responseData}");
+                }
+                else
+                {
+                    _logger?.LogWarning("Request status is: {0}", response.StatusCode);
+                    string errorData = await response.Content.ReadAsStringAsync();
+                    _logger?.LogWarning("Response Content: {0}", errorData);
+                }
+
+                return response;
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError(e, e.Message);
+                throw;
+            }
+        }
+
+        internal static async Task<HttpResponseMessage> PostExecutionsFlowAsync(string env, string accessToken, string flow, NestedAuthenticationPost nestedFlowPost)
+        {
+            string? host = _configuration?[$"{env}:Host"];
+            string? realm = _configuration?[$"{env}:Realm"];
+
+            string? url = $"{host}/admin/realms/{realm}/authentication/flows/{flow}/executions/flow";
+            _logger?.LogInformation("Authentication Execution Url: {0}", url);
+
+            // Bypass SSL certificate validation
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
+            };
+
+            using var httpClient = new HttpClient(handler);
+
+            try
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+                string jsonData = JsonSerializer.Serialize(nestedFlowPost);
+                _logger?.LogInformation("Request Content: {0}", jsonData);
+
+                StringContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await httpClient.PostAsync(url, content);
 
                 if (response.IsSuccessStatusCode)
                 {
