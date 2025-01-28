@@ -282,7 +282,65 @@ while (!exit)
             Console.WriteLine($"{clientMenu.Id} - {clientMenu.Name}");
         }
 
-        AppModels.PauseMessage("...paused!!!");
+        // Selection of Authentication Flow to process
+        Console.WriteLine("Choose Sequence Number of Clients to be copied, separate with coma(,)!");
+        string? inputClient = Console.ReadLine();
+        List<CustomMenu> listSelectedClientMenu = new List<CustomMenu>();
+        List<Client> listSelectedClient = new List<Client>();
+
+        try
+        {
+            int i;
+            string[] choosenInputClient = inputClient.Split(",");
+            foreach (string choice in choosenInputClient)
+            {
+                choice.Trim();
+                i = int.Parse(choice);
+                CustomMenu? selectedClientMenu = listClientMenu.FirstOrDefault(x => x.Id == i);
+                Client? toBeAddClient = listClient.FirstOrDefault(x => x.ClientId == selectedClientMenu?.Name);
+                if ((selectedClientMenu == null) || (toBeAddClient == null))
+                {
+                    throw new Exception("Wrong number to choose!");
+                }
+                string strSelectedClientMenu = JsonSerializer.Serialize(selectedClientMenu);
+                logger?.LogInformation("Selected Client Menu: {0}", strSelectedClientMenu);
+
+                listSelectedClientMenu.Add(selectedClientMenu);
+                listSelectedClient.Add(toBeAddClient);
+            }
+        }
+        catch (Exception e)
+        {
+            logger?.LogError(e, e.Message);
+            throw;
+        }
+
+        string strListSelectedClient = JsonSerializer.Serialize(listSelectedClient);
+        logger?.LogInformation("List Selected Client: {0}", strListSelectedClient);
+
+        AppModels.ShowCustomMenu(listSelectedClientMenu, "Selected Client");
+        AppModels.PauseMessage("Are You sure to set these Client?");
+
+        // POST Client to Destination Realm
+        int k = 0;
+        foreach (Client selectedClient in listSelectedClient)
+        {
+            // POST Client
+            logger.LogInformation("POST Client");
+            ClientPost clientToPost = RealmActions.GetClientPostFromClient(selectedClient);
+            string strClientToPost = JsonSerializer.Serialize(clientToPost);
+            logger?.LogInformation("Client To Post: {0}", strClientToPost);
+
+            HttpResponseMessage clientPostResponse = await RealmActions.PostClientAsync("Destination", dstAccessToken, clientToPost);
+            string strClientPostResponse = JsonSerializer.Serialize(clientPostResponse);
+            logger.LogInformation("HttpResponseMessage: {0}", strClientPostResponse);
+
+            k++;
+        }
+        
+        AppModels.PauseMessage($"{k} Client(s) have been posted!");
+
+
 
         AppModels.ShowMenu(AppModels.GetMainMenu());
         input = Console.ReadLine();

@@ -367,4 +367,22 @@ namespace keycloak_config_getset
         [JsonPropertyName("config")]
         public Dictionary<string, string>? Config { get; set; }
     }
+
+    internal class ClientPost
+    {
+        [JsonPropertyName("clientId")]
+        public string? ClientId { get; set; }
+
+        [JsonPropertyName("protocol")]
+        public string? Protocol { get; set; }
+
+        [JsonPropertyName("enabled")]
+        public bool Enabled { get; set; }
+
+        [JsonPropertyName("attributes")]
+        public Dictionary<string, string>? Attributes { get; set; }
+
+        [JsonPropertyName("redirectUris")]
+        public List<string>? RedirectUris { get; set; }
+    }
 }
