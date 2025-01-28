@@ -266,6 +266,27 @@ while (!exit)
         AppModels.ShowMenu(AppModels.GetMainMenu());
         input = Console.ReadLine();
     }
+    else if (input.Equals("3"))
+    {
+        // Get All Clients
+        List<Client> listClient = await RealmActions.GetAllClientAsync("Source", srcAccessToken!);
+        string strListClient = JsonSerializer.Serialize(listClient);
+        logger.LogInformation("List Clients: {0}", strListClient);
+
+        AppModels.PauseMessage("Get All Clients...");
+
+        // Client Custom Menu
+        List<CustomMenu> listClientMenu = AppModels.ConvertToCustomMenu(listClient, "ClientId");
+        foreach (CustomMenu clientMenu in listClientMenu)
+        {
+            Console.WriteLine($"{clientMenu.Id} - {clientMenu.Name}");
+        }
+
+        AppModels.PauseMessage("...paused!!!");
+
+        AppModels.ShowMenu(AppModels.GetMainMenu());
+        input = Console.ReadLine();
+    }
     else
     {
         exit = true;
