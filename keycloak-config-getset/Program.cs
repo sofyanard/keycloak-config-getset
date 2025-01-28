@@ -338,6 +338,17 @@ while (!exit)
             // Get Client UUID from HttpResponseMessage Header
             string clientUuid = Helpers.GetClientUuidFromResponse(strClientPostResponse);
             logger.LogInformation("Client UUID: {0}", clientUuid);
+
+            // Update (PUT) Destination Client from Source Client's Properties
+            logger.LogInformation("PUT Destination Client from Source Client's Properties");
+            ClientPut clientPut = RealmActions.PutDestinationClientFromSource(selectedClient);
+            string strlientPut = JsonSerializer.Serialize(clientPut);
+            logger?.LogInformation("Client To Put: {0}", strlientPut);
+
+            HttpResponseMessage clientPutResponse = await RealmActions.PutClientAsync("Destination", dstAccessToken, clientUuid, clientPut);
+            string strClientPutResponse = JsonSerializer.Serialize(clientPutResponse);
+            logger.LogInformation("HttpResponseMessage: {0}", strClientPutResponse);
+
             k++;
         }
         

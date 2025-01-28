@@ -619,5 +619,87 @@ namespace keycloak_config_getset
                 throw;
             }
         }
+
+        internal static ClientPut PutDestinationClientFromSource(Client srcClient)
+        {
+            ClientPut clientPut = new ClientPut();
+
+            clientPut.ClientId = srcClient.ClientId;
+            clientPut.Name = srcClient.Name;
+            clientPut.RootUrl = srcClient.RootUrl;
+            clientPut.BaseUrl = srcClient.BaseUrl;
+            clientPut.SurrogateAuthRequired = srcClient.SurrogateAuthRequired;
+            clientPut.Enabled = srcClient.Enabled;
+            clientPut.AlwaysDisplayInConsole = srcClient.AlwaysDisplayInConsole;
+            clientPut.ClientAuthenticatorType = srcClient.ClientAuthenticatorType;
+            clientPut.RedirectUris = ["*"];
+            clientPut.WebOrigins = srcClient.WebOrigins;
+            clientPut.NotBefore = srcClient.NotBefore;
+            clientPut.BearerOnly = srcClient.BearerOnly;
+            clientPut.ConsentRequired = srcClient.ConsentRequired;
+            clientPut.StandardFlowEnabled = srcClient.StandardFlowEnabled;
+            clientPut.ImplicitFlowEnabled = srcClient.ImplicitFlowEnabled;
+            clientPut.DirectAccessGrantsEnabled = srcClient.DirectAccessGrantsEnabled;
+            clientPut.ServiceAccountsEnabled = srcClient.ServiceAccountsEnabled;
+            clientPut.PublicClient = srcClient.PublicClient;
+            clientPut.FrontchannelLogout = srcClient.FrontchannelLogout;
+            clientPut.Protocol = srcClient.Protocol;
+            clientPut.Attributes = srcClient.Attributes;
+            clientPut.FullScopeAllowed = srcClient.FullScopeAllowed;
+            clientPut.NodeReRegistrationTimeout = srcClient.NodeReRegistrationTimeout;
+            clientPut.DefaultClientScopes = srcClient.DefaultClientScopes;
+            clientPut.OptionalClientScopes = srcClient.OptionalClientScopes;
+
+            return clientPut;
+        }
+
+        internal static async Task<HttpResponseMessage> PutClientAsync(string env, string accessToken, string id, ClientPut clientPut)
+        {
+            string? host = _configuration?[$"{env}:Host"];
+            string? realm = _configuration?[$"{env}:Realm"];
+
+            string? url = $"{host}/admin/realms/{realm}/clients/{id}";
+            _logger?.LogInformation("Url: {0}", url);
+
+            // Bypass SSL certificate validation
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
+            };
+
+            using var httpClient = new HttpClient(handler);
+
+            try
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+                string jsonData = JsonSerializer.Serialize(clientPut);
+                _logger?.LogInformation("Request Content: {0}", jsonData);
+
+                StringContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await httpClient.PutAsync(url, content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger?.LogInformation("Request status is success");
+                    string responseData = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Response Data: {responseData}");
+                }
+                else
+                {
+                    _logger?.LogWarning("Request status is: {0}", response.StatusCode);
+                    string errorData = await response.Content.ReadAsStringAsync();
+                    _logger?.LogWarning("Response Content: {0}", errorData);
+                }
+
+                return response;
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError(e, e.Message);
+                throw;
+            }
+        }
     }
 }
