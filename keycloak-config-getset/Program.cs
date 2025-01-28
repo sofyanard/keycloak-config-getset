@@ -349,12 +349,30 @@ while (!exit)
             string strClientPutResponse = JsonSerializer.Serialize(clientPutResponse);
             logger.LogInformation("HttpResponseMessage: {0}", strClientPutResponse);
 
+            // POST Protocol Mapper
+            List<ProtocolMapper>? listProtocolMapper = selectedClient.ProtocolMappers;
+            string strListProtocolMapper = JsonSerializer.Serialize(listProtocolMapper);
+            logger.LogInformation("List Protocol Mapper: {0}", strListProtocolMapper);
+
+            if ((listProtocolMapper != null) && (listProtocolMapper.Count > 0))
+            {
+                foreach (ProtocolMapper protocolMapper in listProtocolMapper)
+                {
+                    logger.LogInformation("POST Protocol Mapper");
+                    ProtocolMapperPost protocolMapperPost = RealmActions.GetProtocolMapperPostFromProtocolMapper(protocolMapper);
+                    string strProtocolMapperPost = JsonSerializer.Serialize(protocolMapperPost);
+                    logger?.LogInformation("Protocol Mapper To Post: {0}", strProtocolMapperPost);
+
+                    HttpResponseMessage protocolMapperPostResponse = await RealmActions.PostProtocolMapperAsync("Destination", dstAccessToken, clientUuid, protocolMapperPost);
+                    string strProtocolMapperPostResponse = JsonSerializer.Serialize(protocolMapperPostResponse);
+                    logger.LogInformation("HttpResponseMessage: {0}", strProtocolMapperPostResponse);
+                }
+            }
+
             k++;
         }
         
         AppModels.PauseMessage($"{k} Client(s) have been posted!");
-
-
 
         AppModels.ShowMenu(AppModels.GetMainMenu());
         input = Console.ReadLine();

@@ -475,4 +475,19 @@ namespace keycloak_config_getset
         [JsonPropertyName("access")]
         public Access? Access { get; set; }
     }
+
+    internal class ProtocolMapperPost
+    {
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("protocol")]
+        public string? Protocol { get; set; }
+
+        [JsonPropertyName("protocolMapper")]
+        public string? ProtocolMapperType { get; set; }
+
+        [JsonPropertyName("config")]
+        public Dictionary<string, string>? Config { get; set; }
+    }
 }

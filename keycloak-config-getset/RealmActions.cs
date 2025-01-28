@@ -701,5 +701,66 @@ namespace keycloak_config_getset
                 throw;
             }
         }
+
+        internal static ProtocolMapperPost GetProtocolMapperPostFromProtocolMapper(ProtocolMapper protocolMapper)
+        {
+            ProtocolMapperPost protocolMapperPost = new ProtocolMapperPost();
+
+            protocolMapperPost.Name = protocolMapper.Name;
+            protocolMapperPost.Protocol = protocolMapper.Protocol;
+            protocolMapperPost.ProtocolMapperType = protocolMapper.ProtocolMapperType;
+            protocolMapperPost.Config = protocolMapper.Config;
+
+            return protocolMapperPost;
+        }
+
+        internal static async Task<HttpResponseMessage> PostProtocolMapperAsync(string env, string accessToken, string clientUuid, ProtocolMapperPost protocolMapperPost)
+        {
+            string? host = _configuration?[$"{env}:Host"];
+            string? realm = _configuration?[$"{env}:Realm"];
+
+            string? url = $"{host}/admin/realms/{realm}/clients/{clientUuid}/protocol-mappers/models";
+            _logger?.LogInformation("Url: {0}", url);
+
+            // Bypass SSL certificate validation
+            var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
+            };
+
+            using var httpClient = new HttpClient(handler);
+
+            try
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+                string jsonData = JsonSerializer.Serialize(protocolMapperPost);
+                _logger?.LogInformation("Request Content: {0}", jsonData);
+
+                StringContent content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+
+                HttpResponseMessage response = await httpClient.PostAsync(url, content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger?.LogInformation("Request status is success");
+                    string responseData = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Response Data: {responseData}");
+                }
+                else
+                {
+                    _logger?.LogWarning("Request status is: {0}", response.StatusCode);
+                    string errorData = await response.Content.ReadAsStringAsync();
+                    _logger?.LogWarning("Response Content: {0}", errorData);
+                }
+
+                return response;
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError(e, e.Message);
+                throw;
+            }
+        }
     }
 }
