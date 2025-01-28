@@ -335,6 +335,9 @@ while (!exit)
             string strClientPostResponse = JsonSerializer.Serialize(clientPostResponse);
             logger.LogInformation("HttpResponseMessage: {0}", strClientPostResponse);
 
+            // Get Client UUID from HttpResponseMessage Header
+            string clientUuid = Helpers.GetClientUuidFromResponse(strClientPostResponse);
+            logger.LogInformation("Client UUID: {0}", clientUuid);
             k++;
         }
         
